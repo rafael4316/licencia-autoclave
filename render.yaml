@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 services:
   - type: web
     name: licencia-autoclave
@@ -5,3 +6,12 @@ services:
     buildCommand: ""
     startCommand: python server.py
     plan: free
+=======
+services:
+  - type: web
+    name: licencia-autoclave
+    env: python
+    buildCommand: ""
+    startCommand: python server.py
+    plan: free
+>>>>>>> 37ed595605f5e49dfbb4ba4f8f32897fdb752a7c

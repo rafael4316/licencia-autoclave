@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pandas
 numpy
 matplotlib
@@ -12,4 +13,20 @@ pycryptodome
 flask-cors  
 sqlalchemy
 mplcursors
+=======
+pandas
+numpy
+matplotlib
+PyQt6
+fpdf2
+pyarmor==7.6.0
+pyinstaller
+flask
+requests
+flask_cors
+pycryptodome
+flask-cors  
+sqlalchemy
+mplcursors
+>>>>>>> 37ed595605f5e49dfbb4ba4f8f32897fdb752a7c
 scipy
