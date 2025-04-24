@@ -1,0 +1,15 @@
+pandas
+numpy
+matplotlib
+PyQt6
+fpdf2
+pyarmor==7.6.0
+pyinstaller
+flask
+requests
+flask_cors
+pycryptodome
+flask-cors  
+sqlalchemy
+mplcursors
+scipy
