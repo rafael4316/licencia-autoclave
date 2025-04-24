@@ -35,18 +35,14 @@ def is_license_valid(username, password, license_key, machine_id):
         session.close()
         return False, "Usuario no encontrado."
     
-    # Verificar la contraseña (comparando hash SHA256)
     if lic.password_hash != hashlib.sha256(password.encode()).hexdigest():
         session.close()
         return False, "Contraseña incorrecta."
     
-    # Verificar la clave de licencia
     if lic.license_key != license_key:
         session.close()
         return False, "Clave de licencia incorrecta."
     
-    # Verificar el identificador único de la máquina:
-    # Si aún no se asignó, lo asignamos en este primer uso.
     if not lic.machine_id:
         lic.machine_id = machine_id
     else:
@@ -54,12 +50,10 @@ def is_license_valid(username, password, license_key, machine_id):
             session.close()
             return False, "La licencia no es válida para esta máquina."
     
-    # Verificar si ya se usó (para licencia de un solo uso)
     if lic.used:
         session.close()
         return False, "La licencia ya fue utilizada."
     
-    # Verificar fecha de expiración
     try:
         if datetime.datetime.now().date() > lic.expiration_date:
             session.close()
@@ -68,7 +62,6 @@ def is_license_valid(username, password, license_key, machine_id):
         session.close()
         return False, f"Formato de fecha de expiración incorrecto: {e}"
     
-    # Si todo es válido, marcar la licencia como usada
     lic.used = True
     session.commit()
     session.close()
@@ -90,6 +83,10 @@ def verify():
 
     valid, message = is_license_valid(username, password, license_key, machine_id)
     return jsonify({"success": valid, "message": message})
+
+@app.route("/", methods=["GET"])
+def home():
+    return "Servidor de licencias para autoclaves en funcionamiento ✅"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
