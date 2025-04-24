@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: licencia-autoclave
+    env: python
+    buildCommand: ""
+    startCommand: python server.py
+    plan: free
