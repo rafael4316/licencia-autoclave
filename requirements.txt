@@ -1,15 +1,10 @@
-pandas
-numpy
-matplotlib
-PyQt6
-fpdf2
 pyarmor==7.6.0
-pyinstaller
 flask
+flask-cors
 requests
 flask-cors
 pycryptodome
 sqlalchemy
-mplcursors
-scipy
+
+
 
