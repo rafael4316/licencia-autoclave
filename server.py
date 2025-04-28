@@ -9,7 +9,7 @@ import datetime
 import uvicorn
 
 # Configuración del logger
-tlogging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 # Configuración de la base de datos
