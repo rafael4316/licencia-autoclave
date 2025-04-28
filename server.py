@@ -1,10 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Date
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 import bcrypt
 import datetime
+import os
+import uvicorn
 
 app = FastAPI()
 Base = declarative_base()
@@ -39,23 +40,29 @@ async def verify_license(data: VerifyRequest):
     session = Session()
     lic = session.query(License).filter_by(username=data.username).first()
     if not lic:
+        session.close()
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
     if not bcrypt.checkpw(data.password.encode(), lic.password_hash.encode()):
+        session.close()
         raise HTTPException(status_code=401, detail="Contraseña incorrecta.")
     if lic.license_key != data.license_key:
+        session.close()
         raise HTTPException(status_code=401, detail="Clave de licencia incorrecta.")
     if not lic.machine_id:
         lic.machine_id = data.machine_id
     elif lic.machine_id != data.machine_id:
+        session.close()
         raise HTTPException(status_code=401, detail="La licencia no corresponde a esta máquina.")
     if lic.used:
+        session.close()
         raise HTTPException(status_code=401, detail="La licencia ya fue utilizada.")
     if lic.expiration_date and datetime.datetime.now().date() > lic.expiration_date:
+        session.close()
         raise HTTPException(status_code=401, detail="La licencia ha expirado.")
     lic.used = True
     session.commit()
-    session.close()
     exp = lic.expiration_date.isoformat() if lic.expiration_date else None
+    session.close()
     return {"success": True, "message": "Licencia válida.", "expiration_date": exp}
 
 @app.post("/reset_license")
@@ -65,9 +72,17 @@ async def reset_license(data: ResetRequest):
     session = Session()
     lic = session.query(License).filter_by(username=data.username).first()
     if not lic:
+        session.close()
         raise HTTPException(status_code=404, detail="Licencia no encontrada.")
     lic.machine_id = ""
     lic.used = False
     session.commit()
     session.close()
     return {"success": True, "message": "Licencia reiniciada."}
+
+# ---------------------------------------------
+# Arrancar el servidor Uvicorn si es ejecutado directamente
+# ---------------------------------------------
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
