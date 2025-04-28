@@ -5,9 +5,12 @@ services:
     env: python
     plan: starter
     region: oregon
-    autodeploy: true
+    autoDeploy: true
     buildCommand: |
       pip install -r requirements.txt
       cd src
-      python add_license.py            # ahora siembra en src/licenses.db
-    startCommand: python server.py      # arranca FastAPI desde src/
+      python add_license.py
+    startCommand: |
+      cd src
+      python server.py
+    branch: main

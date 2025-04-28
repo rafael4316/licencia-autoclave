@@ -1,11 +1,21 @@
+import os
 import bcrypt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from server import Base, License, DATABASE_URL
+from server import Base, License
 from datetime import datetime
 
-# Configuración
+# ——————————————————————————
+# BASE_DIR y DATABASE_URL Correcto
+# ——————————————————————————
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'licenses.db')}"
+
+# ——————————————————————————
+# Crear motor y sesión
+# ——————————————————————————
 engine = create_engine(DATABASE_URL, echo=False)
+Base.metadata.create_all(engine)  # Asegurarse que la tabla existe
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -29,6 +39,6 @@ def add_license(username, password, license_key, expiration_date_str):
     print(f"Licencia creada para {username} con clave {license_key}, expira {expiration_date}")
 
 if __name__ == "__main__":
-    # Ejemplo: 
-    add_license("juan", "MiPass123!", "JUAN-001-ABC", "2025-12-31")
+    # Crear licencia de ejemplo
+    add_license("yandel1234567", "MiPass123!", "YAN-2-ADD", "2025-12-31")
     session.close()

@@ -9,6 +9,12 @@ import datetime
 import uvicorn
 
 # ——————————————
+# BASE_DIR y DATABASE_URL Correcto
+# ——————————————
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'licenses.db')}"
+
+# ——————————————
 # Logging
 # ——————————————
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -30,7 +36,6 @@ class License(Base):
     machine_id = Column(String, default="")
     used = Column(Boolean, default=False)
 
-DATABASE_URL = 'sqlite:///licenses.db'
 engine = create_engine(DATABASE_URL, echo=False)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
@@ -92,7 +97,6 @@ async def verify_license(data: VerifyRequest):
 @app.post("/reset_license")
 async def reset_license(data: ResetRequest):
     logger.info(f"Received /reset_license request for user: {data.username}")
-    # Cambia esta variable de entorno por tu token real
     ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "TU_CLAVE_SECRETA_ADMIN")
     if data.admin_token != ADMIN_TOKEN:
         logger.warning("Intento de reset no autorizado")
