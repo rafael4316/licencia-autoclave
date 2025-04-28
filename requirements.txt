@@ -1,5 +1,5 @@
-fastapi
-uvicorn[standard]
-SQLAlchemy
-bcrypt
-pydantic
+fastapi==0.95.2
+uvicorn==0.22.0
+sqlalchemy==2.0.20
+bcrypt==4.0.1
+requests==2.31.0

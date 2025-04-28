@@ -4,9 +4,9 @@ url = "https://licencia-autoclave.onrender.com/create_license"
 
 payload = {
     "admin_token": "TU_CLAVE_SECRETA_ADMIN",
-    "username": "nuevo_usuario",
-    "password": "NuevaClave123!",
-    "license_key": "ABC-123-XYZ",
+    "username": "nuevo_usuari1",
+    "password": "ddsdsad",
+    "license_key": "AGB-123-XYZ",
     "expiration_date": "2025-12-31"
 }
 
