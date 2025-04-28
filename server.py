@@ -8,16 +8,18 @@ import bcrypt
 import datetime
 import uvicorn
 
-# Configuración
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'licenses.db')}"
-
+# Configuración del logger
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+# Configuración de la base de datos
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'licenses.db')}"
+engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
+Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
+# Modelo de Licencia
 class License(Base):
     __tablename__ = 'licenses'
     id = Column(Integer, primary_key=True)
@@ -28,9 +30,10 @@ class License(Base):
     machine_id = Column(String, default="")
     used = Column(Boolean, default=False)
 
-engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
+# Crear tablas si no existen
 Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
+
+# Instancia de FastAPI\app = FastAPI()
 
 # Modelos Pydantic
 class VerifyRequest(BaseModel):
@@ -48,9 +51,9 @@ class CreateLicenseRequest(BaseModel):
     username: str
     password: str
     license_key: str
-    expiration_date: str  # "YYYY-MM-DD"
+    expiration_date: str  # Formato "YYYY-MM-DD"
 
-# Endpoints
+# Endpoint de verificación de licencia
 @app.post("/verify")
 async def verify_license(data: VerifyRequest):
     session = Session()
@@ -81,6 +84,7 @@ async def verify_license(data: VerifyRequest):
     session.close()
     return {"success": True, "message": "Licencia válida.", "expiration_date": exp}
 
+# Endpoint para resetear licencia
 @app.post("/reset_license")
 async def reset_license(data: ResetRequest):
     ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "TU_CLAVE_SECRETA_ADMIN")
@@ -97,6 +101,7 @@ async def reset_license(data: ResetRequest):
     session.close()
     return {"success": True, "message": "Licencia reiniciada."}
 
+# Endpoint para crear licencias remotamente
 @app.post("/create_license")
 async def create_license(data: CreateLicenseRequest):
     ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "TU_CLAVE_SECRETA_ADMIN")
@@ -125,6 +130,12 @@ async def create_license(data: CreateLicenseRequest):
     session.close()
     return {"success": True, "message": "Licencia creada."}
 
+# Endpoint raíz para comprobación rápida
+@app.get("/")
+async def root():
+    return {"message": "API de licencias al aire ✔️"}
+
+# Arranque de Uvicorn
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
