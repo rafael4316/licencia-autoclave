@@ -9,13 +9,17 @@ import datetime
 import uvicorn
 
 # Configuración del logger
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+tlogging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 # Configuración de la base de datos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'licenses.db')}"
-engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,
+    connect_args={"check_same_thread": False}
+)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
@@ -33,7 +37,8 @@ class License(Base):
 # Crear tablas si no existen
 Base.metadata.create_all(engine)
 
-# Instancia de FastAPI\app = FastAPI()
+# Instancia de FastAPI
+app = FastAPI()
 
 # Modelos Pydantic
 class VerifyRequest(BaseModel):
