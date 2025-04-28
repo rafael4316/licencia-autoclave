@@ -40,5 +40,5 @@ def add_license(username, password, license_key, expiration_date_str):
 
 if __name__ == "__main__":
     # Crear licencia de ejemplo
-    add_license("yandel1234567", "MiPass123!", "YAN-2-ADD", "2025-12-31")
+    add_license("Marianne@58", "MiPass123!", "YAN-2-ADD", "2025-12-31")
     session.close()
