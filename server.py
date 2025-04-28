@@ -1,15 +1,12 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import hashlib
+import bcrypt
 import datetime
 
-app = Flask(__name__)
-CORS(app)
-
-# Configuración de SQLAlchemy y definición del modelo de Licencia
+app = FastAPI()
 Base = declarative_base()
 
 class License(Base):
@@ -18,75 +15,59 @@ class License(Base):
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     license_key = Column(String, nullable=False)
-    expiration_date = Column(Date, nullable=False)
-    machine_id = Column(String, default="")  # Se asigna en el primer uso
+    expiration_date = Column(Date, nullable=True)
+    machine_id = Column(String, default="")
     used = Column(Boolean, default=False)
 
-# Usaremos SQLite para persistir los datos
 DATABASE_URL = 'sqlite:///licenses.db'
 engine = create_engine(DATABASE_URL, echo=False)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
-def is_license_valid(username, password, license_key, machine_id):
+class VerifyRequest(BaseModel):
+    username: str
+    password: str
+    license_key: str
+    machine_id: str
+
+class ResetRequest(BaseModel):
+    admin_token: str
+    username: str
+
+@app.post("/verify")
+async def verify_license(data: VerifyRequest):
     session = Session()
-    lic = session.query(License).filter_by(username=username).first()
+    lic = session.query(License).filter_by(username=data.username).first()
     if not lic:
-        session.close()
-        return False, "Usuario no encontrado."
-    
-    if lic.password_hash != hashlib.sha256(password.encode()).hexdigest():
-        session.close()
-        return False, "Contraseña incorrecta."
-    
-    if lic.license_key != license_key:
-        session.close()
-        return False, "Clave de licencia incorrecta."
-    
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    if not bcrypt.checkpw(data.password.encode(), lic.password_hash.encode()):
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta.")
+    if lic.license_key != data.license_key:
+        raise HTTPException(status_code=401, detail="Clave de licencia incorrecta.")
     if not lic.machine_id:
-        lic.machine_id = machine_id
-    else:
-        if lic.machine_id != machine_id:
-            session.close()
-            return False, "La licencia no es válida para esta máquina."
-    
+        lic.machine_id = data.machine_id
+    elif lic.machine_id != data.machine_id:
+        raise HTTPException(status_code=401, detail="La licencia no corresponde a esta máquina.")
     if lic.used:
-        session.close()
-        return False, "La licencia ya fue utilizada."
-    
-    try:
-        if datetime.datetime.now().date() > lic.expiration_date:
-            session.close()
-            return False, "La licencia ha expirado."
-    except Exception as e:
-        session.close()
-        return False, f"Formato de fecha de expiración incorrecto: {e}"
-    
+        raise HTTPException(status_code=401, detail="La licencia ya fue utilizada.")
+    if lic.expiration_date and datetime.datetime.now().date() > lic.expiration_date:
+        raise HTTPException(status_code=401, detail="La licencia ha expirado.")
     lic.used = True
     session.commit()
     session.close()
-    return True, "Licencia válida."
+    exp = lic.expiration_date.isoformat() if lic.expiration_date else None
+    return {"success": True, "message": "Licencia válida.", "expiration_date": exp}
 
-@app.route("/verify", methods=["POST"])
-def verify():
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "message": "No se proporcionaron datos."}), 400
-
-    username = data.get("username")
-    password = data.get("password")
-    license_key = data.get("license_key")
-    machine_id = data.get("machine_id")
-
-    if not all([username, password, license_key, machine_id]):
-        return jsonify({"success": False, "message": "Faltan datos."}), 400
-
-    valid, message = is_license_valid(username, password, license_key, machine_id)
-    return jsonify({"success": valid, "message": message})
-
-@app.route("/", methods=["GET"])
-def home():
-    return "Servidor de licencias para autoclaves en funcionamiento ✅"
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+@app.post("/reset_license")
+async def reset_license(data: ResetRequest):
+    if data.admin_token != "TU_CLAVE_SECRETA_ADMIN":
+        raise HTTPException(status_code=403, detail="No autorizado.")
+    session = Session()
+    lic = session.query(License).filter_by(username=data.username).first()
+    if not lic:
+        raise HTTPException(status_code=404, detail="Licencia no encontrada.")
+    lic.machine_id = ""
+    lic.used = False
+    session.commit()
+    session.close()
+    return {"success": True, "message": "Licencia reiniciada."}
