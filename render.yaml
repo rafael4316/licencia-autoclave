@@ -1,17 +1,12 @@
-                                                                                                                                                                                                                                                                                                                        <<<<<<< HEAD
+# render.yaml
 services:
   - type: web
-    name: licencia-autoclave
-    env: python
-    buildCommand: ""
-    startCommand: python server.py
-    plan: free
-=======
-services:
-  - type: web
-    name: licencia-autoclave
-    env: python
-    buildCommand: ""
-    startCommand: python server.py
-    plan: free
->>>>>>> 37ed595605f5e49dfbb4ba4f8f32897fdb752a7c
+    name: licencia-autoclave           # Nombre del servicio en Render
+    env: python                         # Entorno de ejecución
+    plan: starter                       # Plan (puede ser free, starter, etc.)
+    region: oregon                      # Región del datacenter (ajusta si quieres otra)
+    autodeploy: true                    # Auto deploy desde tu rama principal
+    buildCommand: |
+      pip install -r requirements.txt
+      python add_license.py            # Crea la licencia en licenses.db durante el build
+    startCommand: python server.py      # Arranca tu FastAPI con uvicorn integrado
